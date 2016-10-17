@@ -1,0 +1,5 @@
+docker-denyusernshost
+denyusernshost
+.vagrant
+Vagrantfile
+ubuntu-*-cloudimg-console.log
