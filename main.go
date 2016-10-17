@@ -149,7 +149,7 @@ func denyUsernsHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, k := range logBodyItems {
-		if v, ok := data[k]; ok && v != reflect.Zero(reflect.TypeOf(v)) {
+		if v, ok := data[k]; ok && v != nil && v != reflect.Zero(reflect.TypeOf(v)) {
 			logData[k] = v
 		}
 	}
