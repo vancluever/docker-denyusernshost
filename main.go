@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,6 +25,16 @@ var activationMsg = map[string][]string{
 
 // socketPath is the path to the plugin socket.
 const socketPath = "/run/docker/plugins/denyusernshost.sock"
+
+var (
+	// logBodyItems is a list of items to log from the immediate request body.
+	// Fields are skipped if they are not defined.
+	logBodyItems = []string{"Image", "Env", "Cmd", "Volumes"}
+
+	// logHostConfigItems is a list of items to log from the HostConfig in the
+	// request body. Fields are skipped if they are not defined.
+	logHostConfigItems = []string{"VolumesFrom", "Binds"}
+)
 
 // authzReq is a struct representing an authorization request.
 //
@@ -103,7 +114,6 @@ func denyUsernsHost(w http.ResponseWriter, r *http.Request) {
 	body := make([]byte, r.ContentLength)
 	data := make(map[string]interface{})
 	logData := make(map[string]interface{})
-	logItems := []string{"Image", "Env", "Cmd", "Volumes"}
 	resp := authResponse{
 		Msg: "Request failed with error",
 	}
@@ -138,15 +148,19 @@ func denyUsernsHost(w http.ResponseWriter, r *http.Request) {
 		goto response
 	}
 
-	for _, k := range logItems {
-		if v, ok := data[k]; ok {
+	for _, k := range logBodyItems {
+		if v, ok := data[k]; ok && v != reflect.Zero(reflect.TypeOf(v)) {
 			logData[k] = v
 		}
 	}
 
-	if v, ok := data["HostConfig"]; ok {
-		logData["VolumesFrom"] = data["VolumesFrom"]
-		if w, ok := v.(map[string]interface{})["UsernsMode"]; ok && w.(string) == "host" && strings.HasSuffix(req.RequestURI, "/containers/create") {
+	if v, ok := data["HostConfig"].(map[string]interface{}); ok {
+		for _, k := range logHostConfigItems {
+			if v, ok := v[k]; ok && v != nil && v != reflect.Zero(reflect.TypeOf(v)) {
+				logData[k] = v
+			}
+		}
+		if v, ok := v["UsernsMode"]; ok && v.(string) == "host" && strings.HasSuffix(req.RequestURI, "/containers/create") {
 			// Apparently you don't send 403 for a successful deny.
 			code = http.StatusOK
 			resp.Msg = "userns=host is not allowed"
