@@ -32,8 +32,6 @@ go build -o denyusernshost
 
 Copy the `denyusernshost` binary to a place of your choice, ie:
 `/usr/local/sbin`. Use the service manager of your choice to manage the service.
-You can also use [systemd socket activation][4] to easily start the service on
-demand.
 
 Logs are streamed to standard error. `-debug` adds some extra debug messages
 to the log.
@@ -83,4 +81,3 @@ For more information, please refer to <http://unlicense.org/>
 [1]: https://docs.docker.com/engine/extend/plugins_authorization/
 [2]: https://docs.docker.com/engine/reference/commandline/dockerd/#/daemon-user-namespace-options
 [3]: https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/create-a-container
-[4]: https://docs.docker.com/engine/extend/plugin_api/#/systemd-socket-activation
